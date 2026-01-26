@@ -1,0 +1,85 @@
+# GitHub Labeler Configuration
+# Automatically labels pull requests based on file paths changed
+# https://github.com/actions/labeler
+
+# Path-based labels
+source:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'src/**/*.ps1'
+      - 'src/**/*.psd1'
+
+tests:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'tests/**/*.Tests.ps1'
+      - 'src/**/*.Tests.ps1'
+
+docs:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'docs/**/*.md'
+      - '*.md'
+
+build:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '*.build.ps1'
+
+ci-cd:
+  - changed-files:
+    - any-glob-to-any-file:
+      - '.github/workflows/**/*.yml'
+      - '.github/workflows/**/*.yaml'
+
+github:
+  - changed-files:
+    - any-glob-to-any-file: '.github/**/*'
+
+vscode:
+  - changed-files:
+    - any-glob-to-any-file: '.vscode/**/*'
+
+devcontainer:
+  - changed-files:
+    - any-glob-to-any-file: '.devcontainer/**/*'
+
+dependencies:
+  - changed-files:
+    - any-glob-to-any-file:
+      - 'requirements.psd1'
+      - '.github/dependabot.yml'
+
+# Branch-based labels
+breaking:
+ - head-branch: ['^breaking', 'breaking', 'major']
+
+feature:
+ - head-branch: ['^feature', 'feature', 'enhancement', 'feat', 'add', 'minor']
+
+bugfix:
+ - head-branch: ['^bugfix', 'bugfix', 'fix', 'patch', 'hotfix']
+
+ # Conventional Commit-based labels
+conventional-commits:
+- type: 'bugfix'
+  nouns: ['bugfix', 'fix', 'patch', 'hotfix']
+  labels: ['bugfix']
+- type: 'feature'
+  nouns: ['feature', 'enhancement', 'feat', 'add', 'minor']
+  labels: ['feature']
+- type: 'breaking'
+  nouns: ['breaking', 'major']
+  labels: ['breaking']
+- type: 'docs'
+  nouns: ['document','documentation']
+  labels: ['docs']
+- type: 'build'
+  nouns: ['build','rebuild']
+  labels: ['build']
+- type: 'performance'
+  nouns: ['performance', 'optimize', 'optimization']
+  labels: ['performance']
+- type: 'config'
+  nouns: ['config', 'conf', 'cofiguration', 'configure']
+  labels: ['config']
