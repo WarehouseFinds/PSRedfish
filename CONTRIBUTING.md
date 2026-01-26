@@ -1,4 +1,4 @@
-# Contributing to PSScriptModule
+# Contributing to PSRedfish
 
 Thank you for your interest in contributing! We appreciate your help in making this project better.
 

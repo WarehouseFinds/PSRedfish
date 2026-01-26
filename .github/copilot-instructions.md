@@ -26,7 +26,7 @@ This is a **PowerShell Script Module Template** project designed for building pr
 
 ```
 src/
-├── PSScriptModule.psd1      # Module manifest (auto-updated)
+├── PSRedfish.psd1      # Module manifest (auto-updated)
 ├── Public/                   # Exported functions
 ├── Private/                  # Internal helper functions
 └── Classes/                  # PowerShell classes
@@ -286,8 +286,8 @@ Invoke-Build Invoke-InjectionHunter   # Security scan
 Invoke-Build Export-CommandHelp
 
 # Test the built module
-Import-Module ./build/out/PSScriptModule/PSScriptModule.psd1 -Force
-Get-Command -Module PSScriptModule
+Import-Module ./build/out/PSRedfish/PSRedfish.psd1 -Force
+Get-Command -Module PSRedfish
 ```
 
 ### Test Expectations
@@ -455,8 +455,8 @@ Comprehensive guides are available:
 - **New public function**: `src/Public/Verb-Noun.ps1`
 - **New private function**: `src/Private/VerbNoun.ps1`
 - **Test file**: Same location as function, add `.Tests.ps1` suffix
-- **Build script**: `PSScriptModule.build.ps1`
-- **Module manifest**: `src/PSScriptModule.psd1`
+- **Build script**: `PSRedfish.build.ps1`
+- **Module manifest**: `src/PSRedfish.psd1`
 
 ### Need Help?
 

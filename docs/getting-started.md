@@ -32,7 +32,7 @@ Click the "Use this template" button on GitHub to create a new repository from t
    - **Visibility**: Public or Private
 
 2. **Wait for bootstrap** (~20 seconds):
-   - The automated workflow renames all references from `PSScriptModule` to your module name
+   - The automated workflow renames all references from `PSRedfish` to your module name
    - Updates the module manifest with your description
    - Removes template-specific files
 
@@ -94,7 +94,7 @@ Understanding the project layout:
 
 ```plaintext
 YourModuleName/
-├── 📄 PSScriptModule.build.ps1      # Build script with all tasks
+├── 📄 PSRedfish.build.ps1      # Build script with all tasks
 ├── 📄 requirements.psd1             # Dependency configuration
 ├── 📄 GitVersion.yml                # Version management config
 │
