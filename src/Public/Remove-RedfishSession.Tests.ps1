@@ -12,6 +12,7 @@ Describe 'Remove-RedfishSession' {
         $script:mockSession = [PSCustomObject]@{
             PSTypeName = 'PSRedfish.Session'
             BaseUri    = 'https://test.redfish.com'
+            AuthMethod = 'Basic'
             Username   = 'testuser'
             HttpClient = $mockHttpClient
         }
@@ -85,8 +86,8 @@ Describe 'Remove-RedfishSession' {
             $otherSession = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://other.com'
-                Username   = 'otheruser'
                 AuthMethod = 'Basic'
+                Username   = 'otheruser'
                 HttpClient = $mockHttpClient
             }
 
