@@ -2,17 +2,17 @@ BeforeAll {
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
-Describe 'Show-RedfishMetrics' {
+Describe 'Show-RedfishMetric' {
     Context 'Parameter Validation' {
         It 'Should require mandatory Session parameter' {
-            $command = Get-Command Show-RedfishMetrics
+            $command = Get-Command Show-RedfishMetric
             $sessionParam = $command.Parameters['Session']
             $mandatory = $sessionParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] }
             $mandatory.Mandatory | Should -Contain $true
         }
 
         It 'Should accept Session from pipeline' {
-            $command = Get-Command Show-RedfishMetrics
+            $command = Get-Command Show-RedfishMetric
             $sessionParam = $command.Parameters['Session']
             $pipelineInput = $sessionParam.Attributes | Where-Object {
                 $_ -is [System.Management.Automation.ParameterAttribute] -and $_.ValueFromPipeline

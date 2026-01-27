@@ -1,4 +1,4 @@
-function Get-RedfishErrorDetails {
+function Get-RedfishErrorDetail {
     <#
 .SYNOPSIS
     Extracts structured error details from a Redfish error.
@@ -13,7 +13,7 @@ function Get-RedfishErrorDetails {
     try {
         Invoke-RedfishRequest -Session $session -Uri '/invalid'
     } catch {
-        $details = Get-RedfishErrorDetails $_
+        $details = Get-RedfishErrorDetail $_
         if ($details.StatusCode -eq 404) {
             Write-Host "Resource not found"
         }

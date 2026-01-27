@@ -3,17 +3,17 @@ BeforeAll {
     . $PSScriptRoot/Test-RedfishError.ps1
 }
 
-Describe 'Get-RedfishErrorDetails' {
+Describe 'Get-RedfishErrorDetail' {
     Context 'Parameter Validation' {
         It 'Should require mandatory ErrorRecord parameter' {
-            $command = Get-Command Get-RedfishErrorDetails
+            $command = Get-Command Get-RedfishErrorDetail
             $errorParam = $command.Parameters['ErrorRecord']
             $mandatory = $errorParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] }
             $mandatory.Mandatory | Should -Contain $true
         }
 
         It 'Should accept ErrorRecord from pipeline' {
-            $command = Get-Command Get-RedfishErrorDetails
+            $command = Get-Command Get-RedfishErrorDetail
             $errorParam = $command.Parameters['ErrorRecord']
             $pipelineInput = $errorParam.Attributes | Where-Object {
                 $_ -is [System.Management.Automation.ParameterAttribute] -and $_.ValueFromPipeline
@@ -37,7 +37,7 @@ Describe 'Get-RedfishErrorDetails' {
                 $mockError
             )
 
-            $result = Get-RedfishErrorDetails -ErrorRecord $errorRecord
+            $result = Get-RedfishErrorDetail -ErrorRecord $errorRecord
             $result | Should -Not -BeNullOrEmpty
             $result.StatusCode | Should -Be 404
         }
@@ -53,7 +53,7 @@ Describe 'Get-RedfishErrorDetails' {
                 $mockError
             )
 
-            $result = Get-RedfishErrorDetails -ErrorRecord $errorRecord
+            $result = Get-RedfishErrorDetail -ErrorRecord $errorRecord
             $result | Should -Be $null
         }
 
@@ -77,7 +77,7 @@ Describe 'Get-RedfishErrorDetails' {
                 $mockError
             )
 
-            $result = Get-RedfishErrorDetails -ErrorRecord $errorRecord
+            $result = Get-RedfishErrorDetail -ErrorRecord $errorRecord
             $result.StatusCode | Should -Be 503
             $result.IsRetryable | Should -Be $true
             $result.RetryAfter | Should -Be 30

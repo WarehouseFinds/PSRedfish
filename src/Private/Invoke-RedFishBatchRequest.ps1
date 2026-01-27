@@ -126,8 +126,7 @@ function Invoke-RedfishBatchRequest {
                 $task = $Session.HttpClient.SendAsync($request)
 
                 # Add continuation to release semaphore
-                $continuationTask = $task.ContinueWith([Action[System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]] {
-                        param($t)
+                $null = $task.ContinueWith([Action[System.Threading.Tasks.Task[System.Net.Http.HttpResponseMessage]]] {
                         $semaphore.Release() | Out-Null
                     })
 

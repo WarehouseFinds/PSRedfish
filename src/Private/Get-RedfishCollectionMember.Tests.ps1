@@ -2,7 +2,7 @@ BeforeAll {
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
-Describe 'Get-RedfishCollectionMembers' {
+Describe 'Get-RedfishCollectionMember' {
     BeforeEach {
         $script:mockSession = [PSCustomObject]@{
             PSTypeName = 'PSRedfish.Session'
@@ -12,21 +12,21 @@ Describe 'Get-RedfishCollectionMembers' {
 
     Context 'Parameter Validation' {
         It 'Should require mandatory Session parameter' {
-            $command = Get-Command Get-RedfishCollectionMembers
+            $command = Get-Command Get-RedfishCollectionMember
             $sessionParam = $command.Parameters['Session']
             $mandatory = $sessionParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] }
             $mandatory.Mandatory | Should -Contain $true
         }
 
         It 'Should require mandatory CollectionUri parameter' {
-            $command = Get-Command Get-RedfishCollectionMembers
+            $command = Get-Command Get-RedfishCollectionMember
             $uriParam = $command.Parameters['CollectionUri']
             $mandatory = $uriParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ParameterAttribute] }
             $mandatory.Mandatory | Should -Contain $true
         }
 
         It 'Should have MaxConcurrency parameter with valid range' {
-            $command = Get-Command Get-RedfishCollectionMembers
+            $command = Get-Command Get-RedfishCollectionMember
             $concurrencyParam = $command.Parameters['MaxConcurrency']
             $validateRange = $concurrencyParam.Attributes | Where-Object { $_ -is [System.Management.Automation.ValidateRangeAttribute] }
             $validateRange.MinRange | Should -Be 1

@@ -1,4 +1,4 @@
-function Get-RedfishCollectionMembers {
+function Get-RedfishCollectionMember {
     <#
 .SYNOPSIS
     Gets all members from a Redfish collection efficiently.
@@ -17,10 +17,10 @@ function Get-RedfishCollectionMembers {
     Maximum number of concurrent requests when fetching members. Default is 10.
 
 .EXAMPLE
-    $systems = Get-RedfishCollectionMembers -Session $session -CollectionUri '/redfish/v1/Systems'
+    $systems = Get-RedfishCollectionMember -Session $session -CollectionUri '/redfish/v1/Systems'
 
 .EXAMPLE
-    $chassis = Get-RedfishCollectionMembers -Session $session -CollectionUri '/redfish/v1/Chassis' -MaxConcurrency 20
+    $chassis = Get-RedfishCollectionMember -Session $session -CollectionUri '/redfish/v1/Chassis' -MaxConcurrency 20
 #>
     [CmdletBinding()]
     [OutputType([PSCustomObject[]])]
@@ -47,7 +47,7 @@ function Get-RedfishCollectionMembers {
 
         if (-not $collection.Members) {
             Write-Verbose 'Collection has no members'
-            return @()
+            return [PSCustomObject[]]@()
         }
 
         Write-Verbose "Collection has $($collection.'Members@odata.count') members"

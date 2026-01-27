@@ -14,7 +14,7 @@ function Test-RedfishError {
         Invoke-RedfishRequest -Session $session -Uri '/invalid'
     } catch {
         if (Test-RedfishError $_) {
-            $redfishError = Get-RedfishErrorDetails $_
+            $redfishError = Get-RedfishErrorDetail $_
             Write-Host "HTTP $($redfishError.StatusCode): $($redfishError.Message)"
         }
     }
