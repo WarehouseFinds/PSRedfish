@@ -25,8 +25,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      PSGALLERY_API_KEY: ${{ secrets.PSGALLERY_API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -47,6 +45,8 @@ jobs:
 
       - name: Release Module
         uses: ./.github/actions/ps-release
+        env:
+          PSGALLERY_API_KEY: ${{ secrets.NUGETAPIKEY_PSGALLERY }}
         with:
           release-version: ${{ steps.build.outputs.release-version }}
           publish-psgallery: ${{ inputs.publish-psgallery }}
