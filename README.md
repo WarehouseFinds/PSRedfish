@@ -154,18 +154,6 @@ Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PAT
 Remove-RedfishSession -Session $session
 ```
 
-## ✨ Key Features
-
-**Vendor-Agnostic Design** — Pure DMTF Redfish® implementation works across HPE, Dell, Lenovo, Supermicro, and any compliant hardware
-
-**Production-Grade Performance** — Native .NET HttpClient with connection pooling, concurrent requests, automatic retry with exponential backoff
-
-**Enterprise Reliability** — Comprehensive error handling, structured exceptions, connection lifecycle management, SSL validation
-
-**Pipeline Native** — Full PowerShell pipeline support for composable, idiomatic workflows
-
-**Developer Experience** — Extensive test coverage (80%+), PSScriptAnalyzer compliance, security scanning, detailed verbose logging
-
 ## 📘 Documentation
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
