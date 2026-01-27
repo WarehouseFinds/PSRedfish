@@ -59,7 +59,7 @@ runs:
       if: ${{ inputs.publish-psgallery == 'true' && env.PSGALLERY_API_KEY != '' }}
       shell: pwsh
       env:
-        PSGALLERY_API_KEY: ${{ env.PSGALLERY_API_KEY }}
+        PSGALLERY_API_KEY: ${{ env.NUGETAPIKEY_PSGALLERY }}
       run: |
         Set-StrictMode -Version Latest
         [void] (Import-Module InvokeBuild)
