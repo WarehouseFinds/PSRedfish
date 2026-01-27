@@ -64,6 +64,7 @@ Describe 'Remove-RedfishSession' {
             $testSession = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test.com'
+                AuthMethod = 'Basic'
                 Username   = 'user'
                 HttpClient = $mockHttpClient
             }
@@ -85,6 +86,7 @@ Describe 'Remove-RedfishSession' {
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://other.com'
                 Username   = 'otheruser'
+                AuthMethod = 'Basic'
                 HttpClient = $mockHttpClient
             }
 
@@ -95,8 +97,8 @@ Describe 'Remove-RedfishSession' {
             $sessionWithoutClient = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test.com'
+                AuthMethod = 'Basic'
                 Username   = 'user'
-                HttpClient = $null
             }
 
             { Remove-RedfishSession -Session $sessionWithoutClient -ErrorAction Stop } | Should -Not -Throw
@@ -109,6 +111,7 @@ Describe 'Remove-RedfishSession' {
             $testSession = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test.com'
+                AuthMethod = 'Basic'
                 Username   = 'user'
                 HttpClient = $mockHttpClient
             }
@@ -130,6 +133,7 @@ Describe 'Remove-RedfishSession' {
             $session2 = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test2.com'
+                AuthMethod = 'Basic'
                 Username   = 'user2'
                 HttpClient = $mockHttpClient2
             }
@@ -167,6 +171,7 @@ Describe 'Remove-RedfishSession' {
             $failingSession = [PSCustomObject]@{
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test.com'
+                AuthMethod = 'Basic'
                 Username   = 'user'
                 HttpClient = $mockHttpClient
             }
