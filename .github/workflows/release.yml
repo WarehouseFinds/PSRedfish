@@ -36,16 +36,15 @@ jobs:
       - name: Resolve dependencies
         id: resolve
         uses: ./.github/actions/ps-resolve-dependencies
+        with:
+          module-list: ${{ steps.resolve.outputs.module-list }}
       - name: Build Module
         id: build
         uses: ./.github/actions/ps-build
         with:
           release-type: ${{ inputs['release-type'] }}
-          module-list: ${{ steps.resolve.outputs.module-list }}
       - name: Release Module
         uses: ./.github/actions/ps-release
         with:
-          release-type: ${{ inputs['release-type'] }}
           release-version: ${{ steps.build.outputs.release-version }}
-          module-list: ${{ steps.resolve.outputs.module-list }}
           publish-psgallery: ${{ inputs.publish-psgallery }}
