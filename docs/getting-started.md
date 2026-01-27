@@ -1,156 +1,255 @@
-# 🚀 Getting Started
+# PSRedfish Usage Guide
 
-Welcome! This guide will help you set up your development environment and start building your PowerShell module.
+## Overview
 
-## Prerequisites
+PSRedfish is a universal PowerShell client for the DMTF Redfish® standard. It provides a simple, vendor-neutral interface for managing servers and infrastructure using the Redfish API.
 
-### Required
+## Key Features
 
-- **PowerShell 7.0+** - Core runtime ([Download](https://github.com/PowerShell/PowerShell/releases))
-- **Git** - Version control ([Download](https://git-scm.com/downloads))
+- **Pure Redfish Implementation**: No vendor-specific code - works with any Redfish-compliant endpoint
+- **High Performance**: Uses .NET HttpClient for optimal performance
+- **Session Management**: Built-in session caching and lifecycle management
+- **Pipeline Support**: All cmdlets support PowerShell pipeline operations
+- **Comprehensive Error Handling**: Detailed error messages with Redfish extended information
 
-### Recommended
+## Core Functions
 
-- **Visual Studio Code** with PowerShell extension - Best development experience
-- **PSDepend** - Dependency management
+### New-RedfishSession
 
-### Optional
-
-- **GitHub Copilot** - AI-assisted coding
-- **Docker or Rancher Desktop** - For devcontainer support
-- **PowerShell Gallery account** - Required only if you plan to publish your module
-
-## Initial Setup
-
-### 1. Create Your Repository
-
-Click the "Use this template" button on GitHub to create a new repository from this template.
-
-1. **Fill in repository details**:
-   - **Name**: Your module name (e.g., `MyAwesomeModule`)
-   - **Description**: Brief description of your module
-   - **Visibility**: Public or Private
-
-2. **Wait for bootstrap** (~20 seconds):
-   - The automated workflow renames all references from `PSRedfish` to your module name
-   - Updates the module manifest with your description
-   - Removes template-specific files
-
-3. **Refresh the page** to see your customized repository
-
-### 2. Clone the Repository
-
-```bash
-git clone https://github.com/YourUsername/YourModuleName.git
-cd YourModuleName
-```
-
-### 3. Install Dependencies
-
-#### Option A: Using Devcontainer (Recommended)
-
-If you have Docker/Rancher Desktop installed:
-
-1. Open the repository in VS Code
-2. When prompted, click "Reopen in Container"
-3. All dependencies are pre-installed ✅
-
-#### Option B: Local Installation
+Creates an authenticated session to a Redfish API endpoint.
 
 ```powershell
-# Install PSDepend if not already installed
-Install-Module -Name PSDepend -Scope CurrentUser -Force
+# Create a session with session-based authentication (default, recommended)
+$cred = Get-Credential
+$session = New-RedfishSession -BaseUri 'https://redfish.example.com' -Credential $cred
 
-# Install all project dependencies
-Invoke-PSDepend -Path ./requirements.psd1 -Install -Import -Force
+# Create a session with HTTP Basic authentication
+$session = New-RedfishSession -BaseUri 'https://redfish.example.com' -Credential $cred -AuthMethod Basic
+
+# With custom timeout
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred -TimeoutSeconds 60
+
+# Skip certificate validation (not recommended for production)
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred -SkipCertificateCheck
 ```
 
-This installs:
+**Authentication Methods:**
 
-| Module | Purpose |
-| -------- | --------- |
-| **InvokeBuild** | Build orchestration |
-| **ModuleBuilder** | Module compilation |
-| **Pester** | Testing framework |
-| **PSScriptAnalyzer** | Static code analysis |
-| **InjectionHunter** | Security vulnerability scanning |
-| **Microsoft.PowerShell.PlatyPS** | Help documentation generation |
+- **Session** (default): Creates a Redfish session and uses X-Auth-Token for subsequent requests. More secure and recommended.
+- **Basic**: Uses HTTP Basic Authentication for all requests. Simpler but less secure.
 
-### 4. Verify Installation
+### Invoke-RedfishRequest
+
+Executes HTTP requests against Redfish endpoints.
 
 ```powershell
-# Test that build system works
-Invoke-Build
+# GET request
+$systems = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems'
 
-# Expected output:
-# Build YourModuleName 0.1.0
-# Tasks: Clean, Build
-# Build succeeded. 2 tasks, 0 errors, 0 warnings
+# POST request
+$body = @{
+    ResetType = 'ForceRestart'
+}
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1/Actions/ComputerSystem.Reset' -Method POST -Body $body
+
+# PATCH request to update properties
+$body = @{
+    AssetTag = 'SERVER-001'
+}
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PATCH -Body $body
+
+# DELETE request
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/SessionService/Sessions/1' -Method DELETE
 ```
 
-## Project Structure
+### Get-RedfishSession
 
-Understanding the project layout:
-
-```plaintext
-YourModuleName/
-├── 📄 PSRedfish.build.ps1      # Build script with all tasks
-├── 📄 requirements.psd1             # Dependency configuration
-├── 📄 GitVersion.yml                # Version management config
-│
-├── 📁 src/                          # Your module source code
-│   ├── 📄 YourModuleName.psd1       # Module manifest (metadata)
-│   ├── 📁 Public/                   # Exported functions
-│   ├── 📁 Private/                  # Internal functions
-│   └── 📁 Classes/                  # Class definitions
-│
-├── 📁 tests/                        # Quality assurance
-│   ├── 📁 PSScriptAnalyzer/         # Code analysis tests
-│   └── 📁 InjectionHunter/          # Security tests
-│
-├── 📁 docs/                         # Documentation
-│   ├── 📄 getting-started.md        # This file
-│   ├── 📄 development.md            # Development workflow
-│   ├── 📄 ci-cd.md                  # CI/CD and publishing
-│   └── 📁 help/                     # Command help (auto-generated)
-│
-└── 📁 build/                        # Build output (generated)
-    └── 📁 out/                      # Compiled module
-```
-
-## Customizing Your Module
-
-Quick tweaks to make the template yours. For everything beyond setup, use the Development guide.
-
-### Minimal Customization
-
-- Update manifest metadata in `src/YourModuleName.psd1` (Author, CompanyName, Description, ProjectUri, LicenseUri, tags).
-- Adjust badges and links in `README.md`.
-- Review `LICENSE` and `CONTRIBUTING.md` to match your project.
-
-## Quick Checks
+Retrieves active sessions from the session cache.
 
 ```powershell
-# Build once to verify toolchain
-Invoke-Build
+# Get all active sessions
+$sessions = Get-RedfishSession
 
-# (Optional) run tests
-Invoke-Build Test
+# Filter by BaseUri
+$sessions = Get-RedfishSession -BaseUri 'https://redfish.example.com'
 ```
 
-## Next Steps
+### Remove-RedfishSession
 
-- 📖 Development workflow, function patterns, and tests: [development.md](development.md)
-- 🔄 CI/CD and publishing: [ci-cd.md](ci-cd.md)
-- 🤖 AI contributor guidance: [AGENTS.md](../AGENTS.md)
+Properly disposes of a session and cleans up resources.
 
-## Additional Resources
+```powershell
+# Remove a specific session
+Remove-RedfishSession -Session $session
 
-- [PowerShell Best Practices](https://docs.microsoft.com/en-us/powershell/scripting/developer/cmdlet/cmdlet-development-guidelines)
-- [Pester Documentation](https://pester.dev/)
-- [PSScriptAnalyzer Rules](https://github.com/PowerShell/PSScriptAnalyzer)
-- [Semantic Versioning](https://semver.org/)
+# Remove all sessions via pipeline
+Get-RedfishSession | Remove-RedfishSession
+```
 
----
+## Complete Workflow Example
 
-**Ready to build something awesome? Let's code! 🚀**
+```powershell
+# Import the module
+Import-Module PSRedfish
+
+# Create session
+$cred = Get-Credential
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred
+
+# Get service root
+$serviceRoot = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1'
+Write-Host "Connected to: $($serviceRoot.Name) - $($serviceRoot.RedfishVersion)"
+
+# List all computer systems
+$systems = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems'
+foreach ($systemLink in $systems.Members) {
+    $system = Invoke-RedfishRequest -Session $session -Uri $systemLink.'@odata.id'
+    Write-Host "System: $($system.Name) - $($system.PowerState)"
+}
+
+# Update asset tag
+$updateBody = @{
+    AssetTag = 'PROD-SERVER-001'
+}
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PATCH -Body $updateBody -WhatIf
+
+# Clean up
+Remove-RedfishSession -Session $session
+```
+
+## Pipeline Examples
+
+```powershell
+# Process multiple systems from pipeline
+$systems.Members | ForEach-Object {
+    Invoke-RedfishRequest -Session $session -Uri $_.'@odata.id'
+} | Select-Object Name, PowerState, Model
+
+# Clean up all sessions
+Get-RedfishSession | Remove-RedfishSession
+```
+
+## Error Handling
+
+```powershell
+try {
+    $system = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/Invalid'
+}
+catch {
+    Write-Error "Failed to get system: $_"
+    # Error includes HTTP status code and Redfish extended info
+}
+```
+
+### Authentication Fallback Pattern
+
+Some older BMCs may not support session authentication. Use this pattern for compatibility:
+
+```powershell
+try {
+    # Try session authentication first (more secure)
+    $session = New-RedfishSession -BaseUri $uri -Credential $cred -AuthMethod Session
+}
+catch {
+    Write-Warning "Session authentication failed: $_"
+    Write-Host 'Falling back to Basic authentication...'
+    $session = New-RedfishSession -BaseUri $uri -Credential $cred -AuthMethod Basic
+}
+finally {
+    if ($session) {
+        Remove-RedfishSession -Session $session
+    }
+}
+```
+
+### Managing Multiple Sessions
+
+```powershell
+# Connect to multiple servers
+$session1 = New-RedfishSession -BaseUri 'https://server1.example.com' -Credential $cred
+$session2 = New-RedfishSession -BaseUri 'https://server2.example.com' -Credential $cred
+
+# List all active sessions
+$allSessions = Get-RedfishSession
+foreach ($s in $allSessions) {
+    Write-Host "$($s.BaseUri) - $($s.AuthMethod)"
+}
+
+# Clean up all at once
+Get-RedfishSession | Remove-RedfishSession
+```
+
+## Best Practices
+
+1. **Always Clean Up Sessions**
+
+   ```powershell
+   try {
+       $session = New-RedfishSession -BaseUri $uri -Credential $cred
+       # ... do work ...
+   }
+   finally {
+       Remove-RedfishSession -Session $session
+   }
+   ```
+
+2. **Use -WhatIf for Destructive Operations**
+
+   ```powershell
+   Invoke-RedfishRequest -Session $session -Uri $uri -Method DELETE -WhatIf
+   ```
+
+3. **Enable Verbose Logging for Troubleshooting**
+
+   ```powershell
+   $session = New-RedfishSession -BaseUri $uri -Credential $cred -Verbose
+   Invoke-RedfishRequest -Session $session -Uri $uri -Verbose
+   ```
+
+4. **Leverage Redfish OData Navigation**
+
+   ```powershell
+   # Follow @odata.id references
+   $systemUri = $systems.Members[0].'@odata.id'
+   $system = Invoke-RedfishRequest -Session $session -Uri $systemUri
+   ```
+
+## Security Considerations
+
+- Never use `-SkipCertificateCheck` in production environments
+- Store credentials securely (use `Get-Credential` or secure vaults)
+- Always dispose of sessions when done to prevent resource leaks
+- Use HTTPS endpoints whenever possible
+
+## Troubleshooting
+
+### Connection Timeouts
+
+Increase timeout if connecting to slow endpoints:
+
+```powershell
+$session = New-RedfishSession -BaseUri $uri -Credential $cred -TimeoutSeconds 120
+```
+
+### Certificate Validation Errors
+
+For development/testing only:
+
+```powershell
+$session = New-RedfishSession -BaseUri $uri -Credential $cred -SkipCertificateCheck
+```
+
+### Verbose Logging
+
+Enable verbose output for detailed debugging:
+
+```powershell
+$VerbosePreference = 'Continue'
+$session = New-RedfishSession -BaseUri $uri -Credential $cred -Verbose
+```
+
+## Resources
+
+- [DMTF Redfish Specification](https://www.dmtf.org/standards/redfish)
+- [Redfish Developer Hub](https://redfish.dmtf.org/)
+- [PSRedfish GitHub Repository](https://github.com/yourusername/PSRedfish)

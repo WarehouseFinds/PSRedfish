@@ -51,26 +51,106 @@ Install-Module -Name PSRedfish -Scope CurrentUser
 
 ## Quick Start
 
+### New-RedfishSession
+
+Creates an authenticated session to a Redfish API endpoint.
+
 ```powershell
-# Establish session with any Redfish-compliant BMC (HPE iLO, Dell iDRAC, Lenovo XClarity, etc.)
-$session = New-RedfishSession -BaseUri 'https://bmc.example.com' -Credential (Get-Credential) -EnableMetrics
+# Create a session with session-based authentication (default, recommended)
+$cred = Get-Credential
+$session = New-RedfishSession -BaseUri 'https://redfish.example.com' -Credential $cred
 
-# Query system information
+# Create a session with HTTP Basic authentication
+$session = New-RedfishSession -BaseUri 'https://redfish.example.com' -Credential $cred -AuthMethod Basic
+
+# With custom timeout
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred -TimeoutSeconds 60
+
+# Skip certificate validation (not recommended for production)
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred -SkipCertificateCheck
+```
+
+**Authentication Methods:**
+
+- **Session** (default): Creates a Redfish session and uses X-Auth-Token for subsequent requests. More secure and recommended.
+- **Basic**: Uses HTTP Basic Authentication for all requests. Simpler but less secure.
+
+### Invoke-RedfishRequest
+
+Executes HTTP requests against Redfish endpoints.
+
+```powershell
+# GET request
 $systems = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems'
-$system = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1'
 
-# Fetch thermal and power metrics
-$thermal = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Chassis/1/Thermal'
-$power = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Chassis/1/Power'
+# POST request
+$body = @{
+    ResetType = 'ForceRestart'
+}
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1/Actions/ComputerSystem.Reset' -Method POST -Body $body
 
-# Update system configuration
-$body = @{ AssetTag = 'SERVER-001' }
+# PATCH request to update properties
+$body = @{
+    AssetTag = 'SERVER-001'
+}
 Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PATCH -Body $body
 
-# Performance insights
-$session.Metrics.GetStatistics()
+# DELETE request
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/SessionService/Sessions/1' -Method DELETE
+```
 
-# Clean shutdown
+### Get-RedfishSession
+
+Retrieves active sessions from the session cache.
+
+```powershell
+# Get all active sessions
+$sessions = Get-RedfishSession
+
+# Filter by BaseUri
+$sessions = Get-RedfishSession -BaseUri 'https://redfish.example.com'
+```
+
+### Remove-RedfishSession
+
+Properly disposes of a session and cleans up resources.
+
+```powershell
+# Remove a specific session
+Remove-RedfishSession -Session $session
+
+# Remove all sessions via pipeline
+Get-RedfishSession | Remove-RedfishSession
+```
+
+## Complete Workflow Example
+
+```powershell
+# Import the module
+Import-Module PSRedfish
+
+# Create session
+$cred = Get-Credential
+$session = New-RedfishSession -BaseUri 'https://192.168.1.100' -Credential $cred
+
+# Get service root
+$serviceRoot = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1'
+Write-Host "Connected to: $($serviceRoot.Name) - $($serviceRoot.RedfishVersion)"
+
+# List all computer systems
+$systems = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems'
+foreach ($systemLink in $systems.Members) {
+    $system = Invoke-RedfishRequest -Session $session -Uri $systemLink.'@odata.id'
+    Write-Host "System: $($system.Name) - $($system.PowerState)"
+}
+
+# Update asset tag
+$updateBody = @{
+    AssetTag = 'PROD-SERVER-001'
+}
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PATCH -Body $updateBody -WhatIf
+
+# Clean up
 Remove-RedfishSession -Session $session
 ```
 
@@ -90,8 +170,8 @@ Remove-RedfishSession -Session $session
 
 Comprehensive documentation is available in the [`docs/`](docs/) directory:
 
+- 🚀 **[Getting Started](docs/getting-started.md)** - Practical examples and usage scenarios
 - 📘 **[Module Help](docs/)** - Help files for cmdlets and functions
-- 🚀 **[Examples](docs/examples/)** - Practical examples and usage scenarios
 
 ## 🤝 Contributing
 
