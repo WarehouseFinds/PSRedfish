@@ -56,7 +56,7 @@ runs:
         allowUpdates: true
 
     - name: Publish build package to PSGallery
-      if: ${{ inputs.publish-psgallery == 'true' && env.PSGALLERY_API_KEY != '' }}
+      if: ${{ inputs.publish-psgallery == 'true' && env.NUGETAPIKEY_PSGALLERY != '' }}
       shell: pwsh
       env:
         PSGALLERY_API_KEY: ${{ env.NUGETAPIKEY_PSGALLERY }}
