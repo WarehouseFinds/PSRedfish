@@ -49,6 +49,7 @@ Describe 'Remove-RedfishSession' {
                 PSTypeName = 'PSRedfish.Session'
                 BaseUri    = 'https://test.com'
                 Username   = 'user'
+                AuthMethod = 'Basic'
                 HttpClient = $mockHttpClient
             }
             { Remove-RedfishSession -Session $validSession -ErrorAction Stop } | Should -Not -Throw
