@@ -549,6 +549,8 @@ Describe 'Invoke-RedfishRequest Enhanced' {
 
     Context 'Verbose Logging' {
         It 'Should log attempt number in verbose output' {
+            $method = 'GET'
+            $fullUri = 'https://test.redfish.com/redfish/v1/Systems'
             $attempt = 2
             $maxAttempts = 4
             $message = "$method request to: $fullUri (Attempt $attempt/$maxAttempts)"
