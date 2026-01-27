@@ -1,36 +1,90 @@
 # PSRedfish
 
-PSRedfish is a production-ready PowerShell module for interacting with hardware management interfaces that implement the DMTF Redfish® standard. The module provides a clean, consistent, and PowerShell-native API for managing servers and chassis across vendors such as HPE iLO, Dell iDRAC, Lenovo XClarity, and other Redfish-compliant platforms.
+Production-grade PowerShell module for vendor-agnostic server hardware automation via DMTF Redfish® API — high-performance data center management for HPE iLO, Dell iDRAC, Lenovo XClarity, and all Redfish-compliant platforms.
 
 [![Build Status](https://img.shields.io/github/actions/workflow/status/WarehouseFinds/PSRedfish/ci.yml?branch=main&logo=github&style=flat-square)](https://github.com/WarehouseFinds/PSRedfish/actions/workflows/ci.yml)
 [![PowerShell Gallery](https://img.shields.io/powershellgallery/v/PSRedfish.svg)](https://www.powershellgallery.com/packages/PSRedfish)
 [![Downloads](https://img.shields.io/powershellgallery/dt/PSRedfish.svg)](https://www.powershellgallery.com/packages/PSRedfish)
 [![License](https://img.shields.io/github/license/WarehouseFinds/PSRedfish)](LICENSE)
 
-## 🚀 Getting Started
+## About
 
-### Prerequisites
+**PSRedfish** is a production-grade PowerShell module for managing server hardware through the DMTF Redfish® RESTful API standard. Built on native .NET HttpClient for maximum performance, it provides vendor-agnostic automation for data center infrastructure management.
 
-**Required:**
+### Why Redfish?
 
-- **PowerShell 7.0+**
+Redfish® is the modern standard for out-of-band server management, replacing legacy protocols like IPMI. It provides:
 
-### Installation
+- **RESTful API** over HTTPS with structured JSON responses
+- **Secure by design** with session-based authentication and TLS
+- **Vendor adoption** across HPE iLO 4+, Dell iDRAC 7+, Lenovo XClarity, Cisco UCS, Supermicro, and more
+- **Standardized operations** for power management, firmware updates, BIOS configuration, sensor monitoring
 
-Install the module from the PowerShell Gallery:
+### Use Cases
+
+**Data Center Automation** — Automate server provisioning, configuration, and lifecycle management across heterogeneous hardware fleets
+
+**Infrastructure as Code** — Integrate with CI/CD pipelines to treat bare-metal configuration as versioned, testable code
+
+**Monitoring & Alerting** — Collect hardware telemetry (temperatures, power consumption, health status) for centralized observability platforms
+
+**Disaster Recovery** — Scriptable power control, boot configuration, and remote console access for emergency operations
+
+**Compliance & Auditing** — Query firmware versions, security settings, and hardware inventory for compliance reporting
+
+### Why This Module?
+
+Unlike vendor-specific tools or basic REST wrappers, PSRedfish delivers:
+
+- **Universal compatibility** — One codebase for all Redfish-compliant hardware, no vendor lock-in
+- **Performance at scale** — Connection pooling and concurrent batch requests handle large server fleets efficiently
+- **Production reliability** — Automatic retry logic, structured error handling, and comprehensive testing
+- **PowerShell idioms** — Full pipeline support, `-WhatIf`, `-Verbose`, and native object handling
+
+## Installation
 
 ```powershell
 Install-Module -Name PSRedfish -Scope CurrentUser
 ```
 
-### Usage
+**Requirements:** PowerShell 7.0+
 
-Import the module and use its commands:
+## Quick Start
 
 ```powershell
-Import-Module PSRedfish
-Get-Command -Module PSRedfish
+# Establish session with any Redfish-compliant BMC (HPE iLO, Dell iDRAC, Lenovo XClarity, etc.)
+$session = New-RedfishSession -BaseUri 'https://bmc.example.com' -Credential (Get-Credential) -EnableMetrics
+
+# Query system information
+$systems = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems'
+$system = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1'
+
+# Fetch thermal and power metrics
+$thermal = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Chassis/1/Thermal'
+$power = Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Chassis/1/Power'
+
+# Update system configuration
+$body = @{ AssetTag = 'SERVER-001' }
+Invoke-RedfishRequest -Session $session -Uri '/redfish/v1/Systems/1' -Method PATCH -Body $body
+
+# Performance insights
+$session.Metrics.GetStatistics()
+
+# Clean shutdown
+Remove-RedfishSession -Session $session
 ```
+
+## ✨ Key Features
+
+**Vendor-Agnostic Design** — Pure DMTF Redfish® implementation works across HPE, Dell, Lenovo, Supermicro, and any compliant hardware
+
+**Production-Grade Performance** — Native .NET HttpClient with connection pooling, concurrent requests, automatic retry with exponential backoff
+
+**Enterprise Reliability** — Comprehensive error handling, structured exceptions, connection lifecycle management, SSL validation
+
+**Pipeline Native** — Full PowerShell pipeline support for composable, idiomatic workflows
+
+**Developer Experience** — Extensive test coverage (80%+), PSScriptAnalyzer compliance, security scanning, detailed verbose logging
 
 ## 📘 Documentation
 
