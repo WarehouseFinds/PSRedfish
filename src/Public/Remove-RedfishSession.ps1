@@ -76,7 +76,7 @@ function Remove-RedfishSession {
                 }
 
                 # Dispose HttpClient if present
-                if ($null -ne $Session.HttpClient) {
+                if ($Session.PSObject.Properties['HttpClient'] -and $null -ne $Session.HttpClient) {
                     try {
                         $Session.HttpClient.Dispose()
                         Write-Verbose 'HttpClient disposed successfully'
