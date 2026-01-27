@@ -10,6 +10,10 @@ inputs:
   publish-psgallery:
     description: Publish to PowerShell Gallery
     required: true
+secrets:
+  PSGALLERY_API_KEY:
+    description: API Key for PowerShell Gallery
+    required: false
 runs:
   using: composite
   steps:
@@ -56,10 +60,8 @@ runs:
         allowUpdates: true
 
     - name: Publish build package to PSGallery
-      if: ${{ inputs.publish-psgallery == 'true' && env.NUGETAPIKEY_PSGALLERY != '' }}
+      if: ${{ inputs.publish-psgallery == 'true' && env.PSGALLERY_API_KEY != '' }}
       shell: pwsh
-      env:
-        PSGALLERY_API_KEY: ${{ env.NUGETAPIKEY_PSGALLERY }}
       run: |
         Set-StrictMode -Version Latest
         [void] (Import-Module InvokeBuild)
