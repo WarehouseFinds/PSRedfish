@@ -25,7 +25,10 @@ runs:
         $body = @{
           tag_name = "v${{ inputs.release-version }}"
           target_commitish = "main"
-          previous_tag_name = $previousTag
+        }
+        # Only include previous_tag_name if a previous tag exists
+        if ($previousTag) {
+          $body['previous_tag_name'] = $previousTag
         }
         $requestParams = @{
           Method      = 'Post'
