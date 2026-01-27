@@ -28,6 +28,7 @@ function Test-RedfishError {
     )
 
     process {
-        return $ErrorRecord.TargetObject.PSObject.TypeNames -contains 'PSRedfish.Exception'
+        return $null -ne $ErrorRecord.TargetObject -and
+        $ErrorRecord.TargetObject.PSObject.TypeNames -contains 'PSRedfish.Exception'
     }
 }
