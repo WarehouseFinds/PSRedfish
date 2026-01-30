@@ -117,11 +117,13 @@ jobs:
         with:
           repository: ${{ github.repository }}
           fetch-depth: 0
+
       - name: Build Module
         id: build
         uses: ./.github/actions/ps-build
         with:
           release-type: 'Debug'
           module-list: ${{ needs.dependencies.outputs.module-list }}
+
       - name: Run Integration Tests
         uses: ./.github/actions/ps-integration-tests
