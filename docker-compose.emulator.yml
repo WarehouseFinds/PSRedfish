@@ -1,0 +1,27 @@
+# Docker Compose for Redfish Emulator
+# Use this to run a local Redfish emulator for integration testing
+
+services:
+  redfish-emulator:
+    build:
+      context: .
+      dockerfile: Dockerfile.DMTF.Redfish.Emulator
+    container_name: redfish-emulator
+    ports:
+      - "9000:9000"
+    environment:
+      - PORT=9000
+      - MOCKUP_DIR=/app/mockup/redfish
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/redfish/v1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - redfish-net
+
+networks:
+  redfish-net:
+    driver: bridge

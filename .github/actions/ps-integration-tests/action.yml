@@ -7,11 +7,36 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Start Redfish Emulator
+      shell: bash
+      run: |
+        echo "Starting Redfish emulator..."
+        docker run -d --name redfish-emulator -p 5000:5000 dmtf/redfish-interface-emulator:latest
+        
+        # Wait for emulator to be ready
+        echo "Waiting for emulator to start..."
+        for i in {1..30}; do
+          if curl -f -u Administrator:Password http://localhost:5000/redfish/v1 2>/dev/null; then
+            echo "Emulator is ready"
+            break
+          fi
+          echo "Waiting... ($i/30)"
+          sleep 2
+        done
+
     - name: Run Integration Tests via Invoke-Build
       shell: pwsh
       run: |
         Set-StrictMode -Version Latest
         Invoke-Build -Task IntegrationTests
+
+    - name: Stop Redfish Emulator
+      if: always()
+      shell: bash
+      run: |
+        echo "Stopping Redfish emulator..."
+        docker stop redfish-emulator || true
+        docker rm redfish-emulator || true
 
     - name: Publish Integration Test Results
       uses: EnricoMi/publish-unit-test-result-action@27d65e188ec43221b20d26de30f4892fad91df2f #v2.22.0
