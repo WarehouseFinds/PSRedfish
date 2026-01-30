@@ -53,7 +53,7 @@
         Creates a high-performance session with 20 concurrent connections allowed.
 
     .OUTPUTS
-        PSCustomObject representing the Redfish session with HttpClient and session details.
+        RedfishSession object representing the Redfish session with HttpClient and session details.
 
     .NOTES
         The session object contains an HttpClient instance that should be disposed when no longer needed.
@@ -61,7 +61,7 @@
         Connection pooling is automatically enabled for better performance.
     #>
     [CmdletBinding(SupportsShouldProcess)]
-    [OutputType([PSCustomObject])]
+    [OutputType([RedfishSession])]
     param (
         [Parameter(Mandatory, Position = 0)]
         [ValidateNotNullOrEmpty()]
@@ -189,12 +189,7 @@
                 # Create Redfish session for token-based authentication
                 Write-Verbose 'Creating Redfish session with token authentication'
 
-                # First, use Basic auth to create the session
-                $encodedAuth = [System.Convert]::ToBase64String(
-                    [System.Text.Encoding]::ASCII.GetBytes("${username}:${password}")
-                )
-                $httpClient.DefaultRequestHeaders.Add('Authorization', "Basic $encodedAuth")
-
+                # Prepare session creation request body with credentials
                 $sessionBody = @{
                     UserName = $username
                     Password = $password
@@ -214,11 +209,13 @@
                 for ($attempt = 1; $attempt -le $maxRetries; $attempt++) {
                     try {
                         Write-Verbose "Attempting to create session (attempt $attempt/$maxRetries)"
-                        $sessionResponse = $httpClient.PostAsync("$normalizedUri/redfish/v1/SessionService/Sessions", $sessionContent).GetAwaiter().GetResult()
+                        $sessionResponse = $httpClient.PostAsync("$normalizedUri/redfish/v1/SessionService", $sessionContent).GetAwaiter().GetResult()
 
-                        if (-not $sessionResponse.IsSuccessStatusCode) {
+                        $statusCode = [int]$sessionResponse.StatusCode
+
+                        # Validate HTTP 201 Created response
+                        if ($statusCode -ne 201) {
                             $errorContent = $sessionResponse.Content.ReadAsStringAsync().GetAwaiter().GetResult()
-                            $statusCode = [int]$sessionResponse.StatusCode
 
                             # Retry on transient errors
                             if ($statusCode -in @(408, 429, 503, 504) -and $attempt -lt $maxRetries) {
@@ -229,21 +226,30 @@
                                 continue
                             }
 
-                            throw "Failed to create Redfish session. Status: $statusCode - $($sessionResponse.ReasonPhrase): $errorContent"
+                            throw "Failed to create Redfish session. Expected HTTP 201 Created, received: $statusCode - $($sessionResponse.ReasonPhrase): $errorContent"
                         }
 
-                        # Extract X-Auth-Token from response headers
+                        # Extract X-Auth-Token from response headers (required)
                         if ($sessionResponse.Headers.Contains('X-Auth-Token')) {
                             $sessionToken = $sessionResponse.Headers.GetValues('X-Auth-Token')[0]
-                            Write-Verbose 'Session token obtained successfully'
+                            Write-Verbose "Session token obtained: $($sessionToken.Substring(0, [Math]::Min(8, $sessionToken.Length)))..."
                         } else {
-                            throw 'Server did not return X-Auth-Token header. Session authentication may not be supported.'
+                            throw 'Server did not return X-Auth-Token header in HTTP 201 response. Session authentication is not supported by this endpoint.'
                         }
 
-                        # Extract session Location URI
-                        if ($sessionResponse.Headers.Contains('Location')) {
-                            $sessionUri = $sessionResponse.Headers.GetValues('Location')[0]
-                            Write-Verbose "Session created at: $sessionUri"
+                        # Extract Location header (required for logout)
+                        if ($sessionResponse.Headers.Location) {
+                            # Location may be relative or absolute
+                            $locationUri = $sessionResponse.Headers.Location
+                            if ($locationUri.IsAbsoluteUri) {
+                                $sessionUri = $locationUri.ToString()
+                            } else {
+                                # Convert relative URI to absolute
+                                $sessionUri = "$normalizedUri$($locationUri.ToString())"
+                            }
+                            Write-Verbose "Session resource created at: $sessionUri"
+                        } else {
+                            Write-Warning 'Server did not return Location header. Session logout may not work correctly.'
                         }
 
                         $sessionResponse.Dispose()
@@ -262,8 +268,7 @@
                     throw 'Failed to create Redfish session after multiple attempts'
                 }
 
-                # Remove Basic auth and add token authentication
-                $httpClient.DefaultRequestHeaders.Remove('Authorization')
+                # Add token authentication for subsequent requests
                 $httpClient.DefaultRequestHeaders.Add('X-Auth-Token', $sessionToken)
             } else {
                 # Use Basic Authentication for all requests
@@ -291,69 +296,26 @@
 
             # Initialize metrics if enabled
             $metrics = if ($EnableMetrics) {
-                [PSCustomObject]@{
-                    PSTypeName         = 'PSRedfish.Metrics'
-                    TotalRequests      = 0
-                    SuccessfulRequests = 0
-                    FailedRequests     = 0
-                    RequestDurations   = [System.Collections.Generic.List[double]]::new()
-                    SessionStartTime   = [DateTime]::UtcNow
-                } | Add-Member -MemberType ScriptMethod -Name GetStatistics -Value {
-                    $duration = [DateTime]::UtcNow - $this.SessionStartTime
-
-                    [PSCustomObject]@{
-                        TotalRequests      = $this.TotalRequests
-                        SuccessfulRequests = $this.SuccessfulRequests
-                        FailedRequests     = $this.FailedRequests
-                        SuccessRate        = if ($this.TotalRequests -gt 0) {
-                            [Math]::Round(($this.SuccessfulRequests / $this.TotalRequests) * 100, 2)
-                        } else { 0 }
-                        AverageLatencyMs   = if ($this.RequestDurations.Count -gt 0) {
-                            [Math]::Round(($this.RequestDurations | Measure-Object -Average).Average, 2)
-                        } else { 0 }
-                        MinLatencyMs       = if ($this.RequestDurations.Count -gt 0) {
-                            [Math]::Round(($this.RequestDurations | Measure-Object -Minimum).Minimum, 2)
-                        } else { 0 }
-                        MaxLatencyMs       = if ($this.RequestDurations.Count -gt 0) {
-                            [Math]::Round(($this.RequestDurations | Measure-Object -Maximum).Maximum, 2)
-                        } else { 0 }
-                        P95LatencyMs       = if ($this.RequestDurations.Count -gt 0) {
-                            $sorted = $this.RequestDurations | Sort-Object
-                            $index = [Math]::Floor($sorted.Count * 0.95)
-                            [Math]::Round($sorted[$index], 2)
-                        } else { 0 }
-                        P99LatencyMs       = if ($this.RequestDurations.Count -gt 0) {
-                            $sorted = $this.RequestDurations | Sort-Object
-                            $index = [Math]::Floor($sorted.Count * 0.99)
-                            [Math]::Round($sorted[$index], 2)
-                        } else { 0 }
-                        SessionUptime      = $duration.ToString('hh\:mm\:ss')
-                        RequestsPerSecond  = if ($duration.TotalSeconds -gt 0) {
-                            [Math]::Round($this.TotalRequests / $duration.TotalSeconds, 2)
-                        } else { 0 }
-                    }
-                } -PassThru
+                [RedfishMetrics]::new()
             } else {
                 $null
             }
 
             # Create session object
-            $sessionObject = [PSCustomObject]@{
-                PSTypeName              = 'PSRedfish.Session'
-                BaseUri                 = $normalizedUri
-                ServiceRoot             = $serviceRoot
-                HttpClient              = $httpClient
-                AuthMethod              = $AuthMethod
-                SessionToken            = $sessionToken
-                SessionUri              = $sessionUri
-                CreatedAt               = [DateTime]::UtcNow
-                TimeoutSeconds          = $TimeoutSeconds
-                Username                = $username
-                SkipCertificateCheck    = $SkipCertificateCheck.IsPresent
-                MaxConnectionsPerServer = $MaxConnectionsPerServer
-                ConnectionLifetime      = [TimeSpan]::FromMinutes($ConnectionLifetimeMinutes)
-                Metrics                 = $metrics
-            }
+            $sessionObject = [RedfishSession]::new()
+            $sessionObject.BaseUri = $normalizedUri
+            $sessionObject.ServiceRoot = $serviceRoot
+            $sessionObject.HttpClient = $httpClient
+            $sessionObject.AuthMethod = $AuthMethod
+            $sessionObject.SessionToken = $sessionToken
+            $sessionObject.SessionUri = $sessionUri
+            $sessionObject.CreatedAt = [DateTime]::UtcNow
+            $sessionObject.TimeoutSeconds = $TimeoutSeconds
+            $sessionObject.Username = $username
+            $sessionObject.SkipCertificateCheck = $SkipCertificateCheck.IsPresent
+            $sessionObject.MaxConnectionsPerServer = $MaxConnectionsPerServer
+            $sessionObject.ConnectionLifetime = [TimeSpan]::FromMinutes($ConnectionLifetimeMinutes)
+            $sessionObject.Metrics = $metrics
 
             # Store session in script scope for potential retrieval
             if (-not $script:RedfishSessions) {

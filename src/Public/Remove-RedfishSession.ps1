@@ -31,13 +31,14 @@ function Remove-RedfishSession {
         [Parameter(Mandatory, Position = 0, ValueFromPipeline)]
         [ValidateNotNull()]
         [ValidateScript({
-                if ($_.PSTypeNames -contains 'PSRedfish.Session') {
+                # Support both class-based sessions and legacy PSCustomObject sessions
+                if ($_ -is [RedfishSession] -or $_.PSTypeNames -contains 'PSRedfish.Session' -or $_.PSTypeName -eq 'PSRedfish.Session') {
                     $true
                 } else {
                     throw 'Session parameter must be a valid Redfish session object created by New-RedfishSession'
                 }
             })]
-        [PSCustomObject]
+        [object]
         $Session
     )
 

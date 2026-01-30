@@ -178,7 +178,7 @@ function Invoke-RedfishRequest {
                     $stopwatch.Stop()
 
                     # Update metrics if available
-                    if ($Session.PSObject.Properties['Metrics']) {
+                    if ($Session.PSObject.Properties['Metrics'] -and $null -ne $Session.Metrics) {
                         $Session.Metrics.TotalRequests++
                         $Session.Metrics.RequestDurations.Add($stopwatch.Elapsed.TotalMilliseconds)
                     }
@@ -240,7 +240,7 @@ function Invoke-RedfishRequest {
                         }
 
                         # Update failure metrics
-                        if ($Session.PSObject.Properties['Metrics']) {
+                        if ($Session.PSObject.Properties['Metrics'] -and $null -ne $Session.Metrics) {
                             $Session.Metrics.FailedRequests++
                         }
 
@@ -278,7 +278,7 @@ function Invoke-RedfishRequest {
                     }
 
                     # Success - update metrics
-                    if ($Session.PSObject.Properties['Metrics']) {
+                    if ($Session.PSObject.Properties['Metrics'] -and $null -ne $Session.Metrics) {
                         $Session.Metrics.SuccessfulRequests++
                     }
 
@@ -304,7 +304,7 @@ function Invoke-RedfishRequest {
                 Write-Verbose "Request timed out after $($stopwatch.Elapsed.TotalSeconds)s"
 
                 # Update metrics
-                if ($Session.PSObject.Properties['Metrics']) {
+                if ($Session.PSObject.Properties['Metrics'] -and $null -ne $Session.Metrics) {
                     $Session.Metrics.TotalRequests++
                     $Session.Metrics.FailedRequests++
                 }
