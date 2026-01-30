@@ -4,7 +4,7 @@ external help file: PSRedfish-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: PSRedfish
-ms.date: 01/27/2026
+ms.date: 01/30/2026
 PlatyPS schema version: 2024-05-01
 title: New-RedfishSession
 ---
@@ -292,11 +292,11 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## OUTPUTS
 
-### PSCustomObject representing the Redfish session with HttpClient and session details.
+### RedfishSession object representing the Redfish session with HttpClient and session details.
 
 {{ Fill in the Description }}
 
-### System.Management.Automation.PSObject
+### RedfishSession
 
 {{ Fill in the Description }}
 

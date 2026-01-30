@@ -4,7 +4,7 @@ external help file: PSRedfish-Help.xml
 HelpUri: ''
 Locale: en-US
 Module Name: PSRedfish
-ms.date: 01/27/2026
+ms.date: 01/30/2026
 PlatyPS schema version: 2024-05-01
 title: Remove-RedfishSession
 ---
@@ -20,7 +20,7 @@ Removes a Redfish session and disposes of associated resources.
 ### __AllParameterSets
 
 ```
-Remove-RedfishSession [-Session] <psobject> [-WhatIf] [-Confirm] [<CommonParameters>]
+Remove-RedfishSession [-Session] <Object> [-WhatIf] [-Confirm] [<CommonParameters>]
 ```
 
 ## ALIASES
@@ -76,7 +76,7 @@ HelpMessage: ''
 The Redfish session object to remove.
 
 ```yaml
-Type: System.Management.Automation.PSObject
+Type: System.Object
 DefaultValue: ''
 SupportsWildcards: false
 Aliases: []
@@ -123,7 +123,7 @@ This cmdlet supports the common parameters: -Debug, -ErrorAction, -ErrorVariable
 
 ## INPUTS
 
-### System.Management.Automation.PSObject
+### System.Object
 
 {{ Fill in the Description }}
 
