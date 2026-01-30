@@ -1,4 +1,9 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 

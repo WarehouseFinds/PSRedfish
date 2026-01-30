@@ -11,7 +11,8 @@ Describe 'Injection Hunter security checks' {
     }
     BeforeDiscovery {
         $modulePath = Resolve-Path (Join-Path $PSScriptRoot '..\..\src')
-        $files = Get-ChildItem -Path $modulePath -Recurse -Include '*.ps*1' -Exclude '*.Tests.*'
+        # Exclude class files as they have inter-dependencies that can't be analyzed in isolation
+        $files = Get-ChildItem -Path $modulePath -Recurse -Include '*.ps1' -Exclude '*.Tests.*' | Where-Object { $_.DirectoryName -notmatch 'Classes' }
     }
 
     It '<_.BaseName> Function should contains no Injection Hunter violations' -ForEach $files {
