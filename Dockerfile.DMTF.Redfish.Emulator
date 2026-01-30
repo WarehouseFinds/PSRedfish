@@ -1,0 +1,49 @@
+# Dockerfile for Redfish Emulator
+# This container runs the DMTF Redfish-Mockup-Server for integration testing
+
+FROM python:3.11-slim
+
+LABEL description="Redfish Mockup Server for PSRedfish integration testing"
+LABEL version="1.0"
+LABEL maintainer="PSRedfish"
+
+# Install required system dependencies
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+    git \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Create working directory
+WORKDIR /app
+
+# Install Redfish-Mockup-Server
+RUN pip install --no-cache-dir Redfish-Mockup-Server
+
+# Clone sample Redfish mockup data (DSP2043 public mockup from DMTF)
+RUN git clone https://github.com/DMTF/Redfish-Mockup-Server.git /tmp/mockup-repo && \
+    mkdir -p /app/mockup && \
+    cp -r /tmp/mockup-repo/public-rackmount1 /app/mockup/ && \
+    rm -rf /tmp/mockup-repo
+
+# Expose the default Redfish mockup server port
+EXPOSE 9000
+
+# Set environment variables
+ENV MOCKUP_DIR=/app/mockup/public-rackmount1
+ENV PORT=9000
+
+# Create a startup script to handle both ports (9000 and 5000)
+RUN echo '#!/bin/bash' > /app/start.sh && \
+    echo 'PORT=${PORT:-9000}' >> /app/start.sh && \
+    echo 'echo "Starting Redfish Mockup Server on port $PORT"' >> /app/start.sh && \
+    echo 'echo "Mockup directory: $MOCKUP_DIR"' >> /app/start.sh && \
+    echo 'redfishMockupServer.py -D $MOCKUP_DIR -p $PORT --ssl-off' >> /app/start.sh && \
+    chmod +x /app/start.sh
+
+# Health check to ensure the server is responding
+HEALTHCHECK --interval=10s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:${PORT}/redfish/v1 || exit 1
+
+# Run the mockup server
+CMD ["/app/start.sh"]
