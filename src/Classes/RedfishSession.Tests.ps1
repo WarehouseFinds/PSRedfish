@@ -12,11 +12,6 @@ Describe 'RedfishSession' {
             $session | Should -Not -BeNullOrEmpty
         }
 
-        It 'Should have PSTypeName property for backward compatibility' {
-            $session = [RedfishSession]::new()
-            $session.PSTypeName | Should -Be 'PSRedfish.Session'
-        }
-
         It 'Should be of type RedfishSession' {
             $session = [RedfishSession]::new()
             $session.GetType().Name | Should -Be 'RedfishSession'

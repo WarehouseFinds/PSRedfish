@@ -1,4 +1,9 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
@@ -23,24 +28,20 @@ Describe 'Show-RedfishMetric' {
 
     Context 'Metrics Display' {
         It 'Should warn if metrics not enabled' {
-            $sessionWithoutMetrics = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-            }
+            $sessionWithoutMetrics = [RedfishSession]::new()
+            $sessionWithoutMetrics.BaseUri = 'https://test.com'
 
             $hasMetrics = $null -ne $sessionWithoutMetrics.PSObject.Properties['Metrics'] -and $null -ne $sessionWithoutMetrics.Metrics
             $hasMetrics | Should -Be $false
         }
 
         It 'Should display metrics when available' {
-            $sessionWithMetrics = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                Metrics    = [PSCustomObject]@{
-                    TotalRequests      = 100
-                    SuccessfulRequests = 95
-                    FailedRequests     = 5
-                }
+            $sessionWithMetrics = [RedfishSession]::new()
+            $sessionWithMetrics.BaseUri = 'https://test.com'
+            $sessionWithMetrics.Metrics = [PSCustomObject]@{
+                TotalRequests      = 100
+                SuccessfulRequests = 95
+                FailedRequests     = 5
             }
 
             $hasMetrics = $null -ne $sessionWithMetrics.Metrics

@@ -1,14 +1,17 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
 Describe 'Invoke-RedfishBatchRequest' {
     BeforeEach {
-        $script:mockSession = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://test.redfish.com'
-            HttpClient = $null
-        }
+        $script:mockSession = [RedfishSession]::new()
+        $script:mockSession.BaseUri = 'https://test.redfish.com'
+        $script:mockSession.HttpClient = $null
     }
 
     Context 'Parameter Validation' {

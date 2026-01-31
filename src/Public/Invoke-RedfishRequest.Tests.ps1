@@ -1,20 +1,23 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
 Describe 'Invoke-RedfishRequest Enhanced' {
     BeforeEach {
         # Create mock session object with metrics
-        $script:mockSession = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://test.redfish.com'
-            HttpClient = $null
-            Metrics    = [PSCustomObject]@{
-                TotalRequests      = 0
-                SuccessfulRequests = 0
-                FailedRequests     = 0
-                RequestDurations   = [System.Collections.Generic.List[double]]::new()
-            }
+        $script:mockSession = [RedfishSession]::new()
+        $script:mockSession.BaseUri = 'https://test.redfish.com'
+        $script:mockSession.HttpClient = $null
+        $script:mockSession.Metrics = [PSCustomObject]@{
+            TotalRequests      = 0
+            SuccessfulRequests = 0
+            FailedRequests     = 0
+            RequestDurations   = [System.Collections.Generic.List[double]]::new()
         }
     }
 
@@ -363,11 +366,9 @@ Describe 'Invoke-RedfishRequest Enhanced' {
         }
 
         It 'Should check if session has Metrics property' {
-            $sessionWithMetrics = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                Metrics    = [PSCustomObject]@{
-                    TotalRequests = 0
-                }
+            $sessionWithMetrics = [RedfishSession]::new()
+            $sessionWithMetrics.Metrics = [PSCustomObject]@{
+                TotalRequests = 0
             }
 
             $hasMetrics = $sessionWithMetrics.PSObject.Properties['Metrics'] -ne $null
@@ -375,13 +376,11 @@ Describe 'Invoke-RedfishRequest Enhanced' {
         }
 
         It 'Should handle session without Metrics gracefully' {
-            $sessionWithoutMetrics = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.redfish.com'
-            }
+            $sessionWithoutMetrics = [RedfishSession]::new()
+            $sessionWithoutMetrics.BaseUri = 'https://test.redfish.com'
 
-            $hasMetrics = $sessionWithoutMetrics.PSObject.Properties['Metrics'] -ne $null
-            $hasMetrics | Should -Be $false
+            # Check if Metrics is null (property exists on class but not initialized)
+            $sessionWithoutMetrics.Metrics | Should -BeNullOrEmpty
         }
     }
 

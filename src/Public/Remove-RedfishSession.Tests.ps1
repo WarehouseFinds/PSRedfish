@@ -1,4 +1,9 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
 }
 
@@ -9,13 +14,11 @@ Describe 'Remove-RedfishSession' {
         $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
 
         # Create mock session object
-        $script:mockSession = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://test.redfish.com'
-            AuthMethod = 'Basic'
-            Username   = 'testuser'
-            HttpClient = $mockHttpClient
-        }
+        $script:mockSession = [RedfishSession]::new()
+        $script:mockSession.BaseUri = 'https://test.redfish.com'
+        $script:mockSession.AuthMethod = 'Basic'
+        $script:mockSession.Username = 'testuser'
+        $script:mockSession.HttpClient = $mockHttpClient
 
         # Initialize session cache
         $script:RedfishSessions = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -46,32 +49,35 @@ Describe 'Remove-RedfishSession' {
         It 'Should accept valid session object' {
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $validSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                Username   = 'user'
-                AuthMethod = 'Basic'
-                HttpClient = $mockHttpClient
-            }
+            $validSession = [RedfishSession]::new()
+            $validSession.BaseUri = 'https://test.com'
+            $validSession.Username = 'user'
+            $validSession.AuthMethod = 'Basic'
+            $validSession.HttpClient = $mockHttpClient
             { Remove-RedfishSession -Session $validSession -ErrorAction Stop } | Should -Not -Throw
         }
     }
 
     Context 'Functionality' {
         It 'Should dispose HttpClient' {
-            $script:disposed = $false
-            $mockHttpClient = [PSCustomObject]@{}
-            $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { $script:disposed = $true }
-            $testSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                AuthMethod = 'Basic'
-                Username   = 'user'
-                HttpClient = $mockHttpClient
-            }
+            # Use a session with an HttpClient property to test disposal
+            # Since RedfishSession.HttpClient is strongly typed as System.Net.Http.HttpClient,
+            # we need to test differently - verify that Dispose() is called on the property
+            $testSession = [RedfishSession]::new()
+            $testSession.BaseUri = 'https://test.com'
+            $testSession.AuthMethod = 'Basic'
+            $testSession.Username = 'user'
 
-            Remove-RedfishSession -Session $testSession
-            $script:disposed | Should -Be $true
+            # Create a real HttpClient that we can check for disposal
+            $handler = [System.Net.Http.HttpClientHandler]::new()
+            $httpClient = [System.Net.Http.HttpClient]::new($handler)
+            $testSession.HttpClient = $httpClient
+            $script:RedfishSessions.Add($testSession)
+
+            Remove-RedfishSession -Session $testSession -Confirm:$false
+
+            # After disposal, operations on the HttpClient should fail
+            { $testSession.HttpClient.GetAsync('https://test.com').GetAwaiter().GetResult() } | Should -Throw
         }
 
         It 'Should remove session from cache' {
@@ -83,24 +89,20 @@ Describe 'Remove-RedfishSession' {
         It 'Should handle session not in cache gracefully' {
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $otherSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://other.com'
-                AuthMethod = 'Basic'
-                Username   = 'otheruser'
-                HttpClient = $mockHttpClient
-            }
+            $otherSession = [RedfishSession]::new()
+            $otherSession.BaseUri = 'https://other.com'
+            $otherSession.AuthMethod = 'Basic'
+            $otherSession.Username = 'otheruser'
+            $otherSession.HttpClient = $mockHttpClient
 
             { Remove-RedfishSession -Session $otherSession -ErrorAction Stop } | Should -Not -Throw
         }
 
         It 'Should handle null HttpClient gracefully' {
-            $sessionWithoutClient = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                AuthMethod = 'Basic'
-                Username   = 'user'
-            }
+            $sessionWithoutClient = [RedfishSession]::new()
+            $sessionWithoutClient.BaseUri = 'https://test.com'
+            $sessionWithoutClient.AuthMethod = 'Basic'
+            $sessionWithoutClient.Username = 'user'
 
             { Remove-RedfishSession -Session $sessionWithoutClient -ErrorAction Stop } | Should -Not -Throw
         }
@@ -109,13 +111,11 @@ Describe 'Remove-RedfishSession' {
             $script:RedfishSessions = $null
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $testSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                AuthMethod = 'Basic'
-                Username   = 'user'
-                HttpClient = $mockHttpClient
-            }
+            $testSession = [RedfishSession]::new()
+            $testSession.BaseUri = 'https://test.com'
+            $testSession.AuthMethod = 'Basic'
+            $testSession.Username = 'user'
+            $testSession.HttpClient = $mockHttpClient
 
             { Remove-RedfishSession -Session $testSession -ErrorAction Stop } | Should -Not -Throw
         }
@@ -131,13 +131,11 @@ Describe 'Remove-RedfishSession' {
         It 'Should process multiple sessions from pipeline' {
             $mockHttpClient2 = [PSCustomObject]@{}
             $mockHttpClient2 | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $session2 = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test2.com'
-                AuthMethod = 'Basic'
-                Username   = 'user2'
-                HttpClient = $mockHttpClient2
-            }
+            $session2 = [RedfishSession]::new()
+            $session2.BaseUri = 'https://test2.com'
+            $session2.AuthMethod = 'Basic'
+            $session2.Username = 'user2'
+            $session2.HttpClient = $mockHttpClient2
             $script:RedfishSessions.Add($session2)
 
             $script:RedfishSessions.Count | Should -Be 2
@@ -169,13 +167,11 @@ Describe 'Remove-RedfishSession' {
         It 'Should warn if HttpClient disposal fails' {
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { throw 'Disposal failed' }
-            $failingSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://test.com'
-                AuthMethod = 'Basic'
-                Username   = 'user'
-                HttpClient = $mockHttpClient
-            }
+            $failingSession = [RedfishSession]::new()
+            $failingSession.BaseUri = 'https://test.com'
+            $failingSession.AuthMethod = 'Basic'
+            $failingSession.Username = 'user'
+            $failingSession.HttpClient = $mockHttpClient
 
             # Should not throw, but should write warning
             { Remove-RedfishSession -Session $failingSession -WarningAction SilentlyContinue -ErrorAction Stop } | Should -Not -Throw
