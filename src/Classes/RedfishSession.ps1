@@ -13,9 +13,6 @@ class RedfishSession {
     [TimeSpan] $ConnectionLifetime
     [RedfishMetrics] $Metrics
 
-    # For backward compatibility with tests checking PSTypeName property
-    [string] $PSTypeName = 'PSRedfish.Session'
-
     RedfishSession() {
         # Default constructor
     }

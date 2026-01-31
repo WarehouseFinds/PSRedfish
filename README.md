@@ -1,4 +1,4 @@
-# PSRedfish
+# PSRedfish - (UNSTABLE - EXPERIMENTAL)
 
 Production-grade PowerShell module for vendor-agnostic server hardware automation via DMTF Redfish® API — high-performance data center management for HPE iLO, Dell iDRAC, Lenovo XClarity, and all Redfish-compliant platforms.
 

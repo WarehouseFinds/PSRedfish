@@ -1,5 +1,13 @@
 BeforeAll {
+    # Load class definitions first
+    . (Join-Path $PSScriptRoot '../Classes/RedfishMetrics.ps1')
+    . (Join-Path $PSScriptRoot '../Classes/RedfishSession.ps1')
+
+    # Then load the function
     . $PSCommandPath.Replace('.Tests.ps1', '.ps1')
+
+    # Load Remove-RedfishSession for pipeline tests
+    . (Join-Path $PSScriptRoot 'Remove-RedfishSession.ps1')
 }
 
 Describe 'Get-RedfishSession' {
@@ -17,29 +25,23 @@ Describe 'Get-RedfishSession' {
         $mockHttpClient3 = [PSCustomObject]@{}
         $mockHttpClient3 | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
 
-        $script:session1 = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://redfish1.example.com'
-            Username   = 'user1'
-            CreatedAt  = [DateTime]::UtcNow.AddMinutes(-10)
-            HttpClient = $mockHttpClient1
-        }
+        $script:session1 = [RedfishSession]::new()
+        $script:session1.BaseUri = 'https://redfish1.example.com'
+        $script:session1.Username = 'user1'
+        $script:session1.CreatedAt = [DateTime]::UtcNow.AddMinutes(-10)
+        $script:session1.HttpClient = $mockHttpClient1
 
-        $script:session2 = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://redfish2.example.com'
-            Username   = 'user2'
-            CreatedAt  = [DateTime]::UtcNow.AddMinutes(-5)
-            HttpClient = $mockHttpClient2
-        }
+        $script:session2 = [RedfishSession]::new()
+        $script:session2.BaseUri = 'https://redfish2.example.com'
+        $script:session2.Username = 'user2'
+        $script:session2.CreatedAt = [DateTime]::UtcNow.AddMinutes(-5)
+        $script:session2.HttpClient = $mockHttpClient2
 
-        $script:session3 = [PSCustomObject]@{
-            PSTypeName = 'PSRedfish.Session'
-            BaseUri    = 'https://redfish1.example.com'
-            Username   = 'user3'
-            CreatedAt  = [DateTime]::UtcNow.AddMinutes(-3)
-            HttpClient = $mockHttpClient3
-        }
+        $script:session3 = [RedfishSession]::new()
+        $script:session3.BaseUri = 'https://redfish1.example.com'
+        $script:session3.Username = 'user3'
+        $script:session3.CreatedAt = [DateTime]::UtcNow.AddMinutes(-3)
+        $script:session3.HttpClient = $mockHttpClient3
 
         $script:RedfishSessions.Add($session1)
         $script:RedfishSessions.Add($session2)
@@ -106,7 +108,7 @@ Describe 'Get-RedfishSession' {
         It 'Should return array of session objects' {
             $result = @(Get-RedfishSession)
             $result.Count | Should -Be 3
-            $result[0].PSTypeNames -contains 'PSRedfish.Session' | Should -Be $true
+            $result[0].GetType().Name | Should -Be 'RedfishSession'
         }
 
         It 'Should return session objects with expected properties' {
@@ -132,12 +134,10 @@ Describe 'Get-RedfishSession' {
         It 'Should handle BaseUri with different protocols' {
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $httpSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'http://redfish.example.com'
-                Username   = 'user'
-                HttpClient = $mockHttpClient
-            }
+            $httpSession = [RedfishSession]::new()
+            $httpSession.BaseUri = 'http://redfish.example.com'
+            $httpSession.Username = 'user'
+            $httpSession.HttpClient = $mockHttpClient
             $script:RedfishSessions.Add($httpSession)
 
             $result = Get-RedfishSession -BaseUri 'http://redfish.example.com'
@@ -150,13 +150,16 @@ Describe 'Get-RedfishSession' {
         It 'Should output objects suitable for pipeline' {
             $sessions = Get-RedfishSession
             $sessions | Should -Not -BeNullOrEmpty
-            $sessions[0].PSTypeNames -contains 'PSRedfish.Session' | Should -Be $true
+            $sessions[0].GetType().Name | Should -Be 'RedfishSession'
         }
 
         It 'Should be pipeable to Remove-RedfishSession' {
             # Verify session objects have proper type for pipeline
             $sessions = Get-RedfishSession
-            $sessions[0].PSTypeNames -contains 'PSRedfish.Session' | Should -Be $true
+            $sessions[0].GetType().Name | Should -Be 'RedfishSession'
+
+            # Verify it would be accepted by Remove-RedfishSession's ValidateScript
+            { Remove-RedfishSession -Session $sessions[0] -WhatIf } | Should -Not -Throw
         }
     }
 
@@ -205,13 +208,11 @@ Describe 'Get-RedfishSession' {
             # Simulating what New-RedfishSession does
             $mockHttpClient = [PSCustomObject]@{}
             $mockHttpClient | Add-Member -MemberType ScriptMethod -Name Dispose -Value { }
-            $newSession = [PSCustomObject]@{
-                PSTypeName = 'PSRedfish.Session'
-                BaseUri    = 'https://new.example.com'
-                Username   = 'newuser'
-                CreatedAt  = [DateTime]::UtcNow
-                HttpClient = $mockHttpClient
-            }
+            $newSession = [RedfishSession]::new()
+            $newSession.BaseUri = 'https://new.example.com'
+            $newSession.Username = 'newuser'
+            $newSession.CreatedAt = [DateTime]::UtcNow
+            $newSession.HttpClient = $mockHttpClient
             $script:RedfishSessions.Add($newSession)
 
             $result = Get-RedfishSession
